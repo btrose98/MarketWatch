@@ -6,21 +6,25 @@ from webdriver_manager.chrome import ChromeDriverManager
 from pynput.keyboard import Key, Controller
 import time, yaml
 
-conf = yaml.load(open('locationDetails.yml')) # hide user location data
-location = conf['user_location']['location']
+conf = yaml.load(open('userDetails.yml')) # hide user confidential data
+location = conf['user_data']['location']
+email = conf['user_data']['email']
+password = conf['user_data']['password']
 
+searchItem = "Galaxy Watch 4 Classic"
 upperBoundPrice = 300.00 # max price willing to pay
 lowerBoundPrice = 150.00 # used to filter out junk postins 
 keywords = ["bnib", "unopened", "sealed"]
+
+acceptablePostings = []
+
+keyboard = Controller()
 
 try: 
     driver = webdriver.Chrome()
 except:
     driver = webdriver.Chrome(ChromeDriverManager().install())
     print("had to install new chrome driver")
-
-keyboard = Controller()
-
 
 # open facebook
 # driver.get("https://www.facebook.com/marketplace/?ref=bookmark")
@@ -38,7 +42,7 @@ keyboard = Controller()
 
 # open kijiji and enter search parameters
 driver.get("https://www.kijiji.ca")
-driver.find_element_by_xpath("/html/body/div[3]/div[1]/div/div/div/header/div[3]/div/div[2]/form/div[1]/div/div/div/input").send_keys("Galaxy Watch 4 Classic")
+driver.find_element_by_xpath("/html/body/div[3]/div[1]/div/div/div/header/div[3]/div/div[2]/form/div[1]/div/div/div/input").send_keys(searchItem)
 driver.find_element_by_xpath("/html/body/div[3]/div[1]/div/div/div/header/div[3]/div/div[2]/form/button[1]/span").click()
 time.sleep(3)
 driver.find_element_by_xpath("/html/body/div[11]/div/div/div/div/div/div[2]/div/div[1]/div[1]/div[1]/div/div/input").send_keys(location)
@@ -54,17 +58,18 @@ for item in posts:
         listedPrice = item.find_element_by_class_name("price").get_attribute("innerHTML").strip().lower()
         if("please contact" in listedPrice):
             pass
-        # elif("$" in listedPrice): #img in some prices mess this up
         else:
             listedPriceVal = float(listedPrice.replace("$","").replace(",",""))
             if(lowerBoundPrice <= listedPriceVal <= upperBoundPrice):
                 print("list price:   ", listedPriceVal)
 
                 # add post to list of posts
+                acceptablePostings.append(listedPrice)
 
     except ValueError as verr: # error occurs when there is a picture next to price
         print("error: ", verr)
 
 # send email of list of posts
 
-print("finished")
+print("List:")
+print(acceptablePostings)
